@@ -1,0 +1,4 @@
+interface:
+  display_name: "工业智能体双画幅视频"
+  short_description: "复用并验证横竖版工业智能体视频工作流"
+  default_prompt: "使用 $build-industrial-agent-videos 制作并验证一组横版和竖版工业智能体介绍视频。"

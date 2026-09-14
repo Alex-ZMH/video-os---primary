@@ -1,0 +1,20 @@
+# Media and generated output stay in the local approved library.
+*.mp4
+*.mov
+*.wav
+*.mp3
+*.jpg
+*.jpeg
+*.png
+*.zip
+
+# Local project state and secrets.
+node_modules/
+.media/
+renders/
+snapshots*/
+assets/
+.env
+.env.*
+*.pem
+*.key
