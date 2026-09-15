@@ -44,6 +44,7 @@
 
 - Never copy a later task's title, paths, status, or metrics into an earlier task-root handoff. At closeout, reconcile task name, project directories, final MP4s, approved review note, and library directory.
 - When records disagree, use this precedence: verified final files and hashes, approved review note, task-root handoff, then child handoffs and historical logs.
+- Treat the categorized approved archive as the preservation boundary: only delete superseded binaries after the current MP4s, referenced source images, final voice, script, subtitles, review note, and canonical handoff have all been copied or hard-linked and hash-verified.
 
 ## Verify the delivered files
 

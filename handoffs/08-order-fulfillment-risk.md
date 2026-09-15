@@ -1,6 +1,6 @@
 # 订单履约风险智能体视频交接
 
-状态：v01、v04 与 v05 均已审核归档；v05 为当前推荐版本，v04 作为用户明确通过的历史版本保留。
+状态：v05 为当前唯一终版并已审核归档；v01、v04 的审核结论与修复经验保留在本文，旧版二进制已于 2026-09-15 清理。
 
 ## 预览
 
@@ -19,12 +19,10 @@
 - 晓辰口播只生成一次并复制到另一画幅；三段音频已做 SHA-256 一致性校验和转写检查。
 - 仿真订单、物料和设备字段已标注“仿真演示数据”。
 - 98% OTD 与生产延误减少 50% 均明确标为建设与验收目标，未表达为已实现结果。
-- 16:9 最终文件：`C:\Users\ironman\Desktop\video-sucai\output\order-fulfillment-risk-video\hyperframes-cut-short\renders\order-fulfillment-risk-agent-16x9-v01.mp4`。
-- 16:9 媒体校验：1920×1080、30 fps、H.264/AAC、92.266667 秒、54,545,919 字节。
-- 9:16 最终文件：`C:\Users\ironman\Desktop\video-sucai\output\order-fulfillment-risk-video\hyperframes-cut-vertical-short\renders\order-fulfillment-risk-agent-9x16-v01.mp4`。
-- 9:16 媒体校验：1080×1920、30 fps、H.264/AAC、92.266667 秒、48,100,108 字节。
+- 16:9 最终文件：`C:\Users\ironman\Desktop\video-sucai\output\order-fulfillment-risk-video\hyperframes-cut-short\renders\order-fulfillment-risk-agent-16x9-v05.mp4`。
+- 9:16 最终文件：`C:\Users\ironman\Desktop\video-sucai\output\order-fulfillment-risk-video\hyperframes-cut-vertical-short\renders\order-fulfillment-risk-agent-9x16-v05.mp4`。
 - 交付级成对验证：`ok=true`、共同编排时长 92.24 秒、3 条配音轨一致、两支最终视频均通过检查。
-- 已通过目录：`C:\Users\ironman\Desktop\video-sucai\成品库\01_已通过\订单履约风险智能体`；保留 v01、v04、v05 三组历史通过成片，共 6 支 MP4、6 张封面和 `审核说明.md`，v05 为当前推荐版本。
+- 已通过目录：`C:\Users\ironman\Desktop\video-sucai\成品库\01_已通过\订单履约风险智能体`；按六类目录只保留 v05 双版终片及其实际引用资产。
 
 ## 已知非阻断提示
 
@@ -42,7 +40,7 @@
 
 - 按 16:9 预览批注，将手机信息层移到画面下方，并同步适配 9:16。
 - 外壳及全部内部白色卡片改为半透明深蓝玻璃层；业务字段、风险色、口播、场景时长和动效均未改变。
-- 双版 HyperFrames check 均 `ok=true`：runtime、layout、motion、contrast 错误为 0，文本对比度 90/90；关键帧保存在两个项目的 `snapshots-v03`。
+- 双版 HyperFrames check 均 `ok=true`：runtime、layout、motion、contrast 错误为 0，文本对比度 90/90；旧版关键帧已在终版归档后清理。
 - 计划输出：`order-fulfillment-risk-agent-16x9-v03.mp4`、`order-fulfillment-risk-agent-9x16-v03.mp4`。
 
 ## v04 可读性与占比重制
@@ -53,7 +51,7 @@
 - 16:9 v04：`C:\Users\ironman\Desktop\video-sucai\output\order-fulfillment-risk-video\hyperframes-cut-short\renders\order-fulfillment-risk-agent-16x9-v04.mp4`；1920×1080、30 fps、H.264/AAC、92.266667 秒、69,611,301 字节。
 - 9:16 v04：`C:\Users\ironman\Desktop\video-sucai\output\order-fulfillment-risk-video\hyperframes-cut-vertical-short\renders\order-fulfillment-risk-agent-9x16-v04.mp4`；1080×1920、30 fps、H.264/AAC、92.266667 秒、84,696,882 字节。
 - v04 交付级成对验证：`ok=true`、共同编排时长 92.24 秒、3 条配音轨一致、两支最终视频均通过流与时长检查。
-- 最终关键帧保存在两个项目的 `snapshots-v04`；用户于 2026-09-14 明确审核通过，双版 MP4 与封面已归档至 `C:\Users\ironman\Desktop\video-sucai\成品库\01_已通过\订单履约风险智能体`。
+- 用户于 2026-09-14 明确审核通过；v04 已被 v05 取代，其 MP4、封面和快照于 2026-09-15 清理，验证结论保留在本文。
 
 ## v05 场景入场修复
 
@@ -65,9 +63,9 @@
 - 9:16 v05：`C:\Users\ironman\Desktop\video-sucai\output\order-fulfillment-risk-video\hyperframes-cut-vertical-short\renders\order-fulfillment-risk-agent-9x16-v05.mp4`；1080×1920、30 fps、H.264/AAC、92.266667 秒、84,595,770 字节。
 - v05 交付级成对验证：`ok=true`、共同编排时长 92.24 秒、3 条配音轨一致、两支最终视频均通过流、尺寸、时长和音频检查。
 - 已从最终 9:16 MP4 抽查 59.16、59.30、59.50、59.80 秒：入场为连续渐显，无完成态闪现、透明重置或大块玻璃；证据位于 `hyperframes-cut-vertical-short/snapshots-v05-rendered`。
-- 已通过目录：`C:\Users\ironman\Desktop\video-sucai\成品库\01_已通过\订单履约风险智能体`；保留 v01 历史版本，并新增 2 支 v05 MP4、2 张 v05 封面，`审核说明.md` 已标记 v05 为当前推荐版本。
-- 原待审核目录现为空；v04 已从项目 `review-archive/v04` 归档为历史通过版本，v05 待审核说明保存在项目 `review-archive/v05`，所有源成片均未删除。
+- 已通过目录只保留 v05：2 支终版 MP4、终版实际引用的横竖原图、3 条口播、两版文案/字幕及审核资料。
+- 原待审核目录为空；旧 `review-archive`、v01/v04 成片和旧版快照已于 2026-09-15 清理。
 
 ## 待执行
 
-v04 与 v05 均已审核通过并归档，无待执行项；v05 仍为当前推荐版本。
+v05 已审核通过并完成终版分类归档，无待执行项。
