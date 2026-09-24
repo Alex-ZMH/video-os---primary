@@ -11,10 +11,15 @@ Use the existing HyperFrames, media-use, imagegen, and relevant HyperFrames doma
 
 ## Required behavior
 
+- Apply the repository-level [FINAL_RULES.md](../../FINAL_RULES.md) as the current baseline. It supersedes earlier scene-by-scene image or single-pass media assumptions.
 - Default to the authorized Xiachen reference voice on `jarvis-b` unless the user overrides it.
 - Use natural 1× speech. Never shorten delivery with audio tempo, playback-rate, or removed breathing pauses.
 - Target a bright, natural, positive tone with restrained energy: friendly and alert, neither shouty nor dull.
 - Generate or outpaint portrait-native scenes. Never pass a cropped landscape frame off as the portrait deliverable.
+- Build the visual track as an ordered video playlist. Play every source video to completion once, then restart from the first video and continue the same order only if narration remains. Do not insert static scene images; the only allowed image card is the black end card with the company logo.
+- Keep each video at natural 1× and mute its source audio. Never solve a narration gap by time-stretching a clip or by assigning the same clip twice inside the first playlist pass.
+- Use high-transparency gray, content-sized boxes for titles, numbers, notes, and captions. Keep scene numbers close to their titles and vary caption size slightly by caption content.
+- Do not use “对不对”, “是不是”, “这是”, or “但是” in generated narration copy.
 - Use versioned voice and render filenames. Do not overwrite an approved candidate before the replacement passes review.
 - Render only after the user approves the final preview.
 - On this workstation, prefer sequential `--low-memory-mode --workers 1` renders because normal frame capture may require more than 20 GB of temporary disk.

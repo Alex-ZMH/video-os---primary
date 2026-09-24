@@ -24,14 +24,15 @@ function Get-ProjectInfo([string]$Directory) {
     $root = (Resolve-Path -LiteralPath $Directory).Path
     $index = Join-Path $root 'index.html'
     Assert-Workflow (Test-Path -LiteralPath $index -PathType Leaf) "missing $index"
-    $html = Get-Content -Raw -LiteralPath $index
+    $html = Get-Content -Raw -Encoding UTF8 -LiteralPath $index
     $documents = @($html) + @([regex]::Matches($html, 'data-composition-src="([^"]+)"') | ForEach-Object {
         $path = Join-Path $root ($_.Groups[1].Value -replace '/', [IO.Path]::DirectorySeparatorChar)
         Assert-Workflow (Test-Path -LiteralPath $path -PathType Leaf) "missing sub-composition $path"
-        Get-Content -Raw -LiteralPath $path
+        Get-Content -Raw -Encoding UTF8 -LiteralPath $path
     })
     $rootTag = [regex]::Match($html, '<[^>]*data-composition-id="[^"]+"[^>]*>').Value
     Assert-Workflow ([bool]$rootTag) "composition root not found in $index"
+    $allDocuments = $documents -join "`n"
 
     $audio = @([regex]::Matches($html, '<audio\b[^>]*>') | ForEach-Object {
         $source = Get-Attribute $_.Value 'src'
@@ -44,28 +45,61 @@ function Get-ProjectInfo([string]$Directory) {
         }
     })
 
+    $manifestPath = Join-Path $root 'source-manifest.json'
+    Assert-Workflow (Test-Path -LiteralPath $manifestPath -PathType Leaf) "missing playlist manifest $manifestPath"
+    $manifest = Get-Content -Raw -Encoding UTF8 -LiteralPath $manifestPath | ConvertFrom-Json
+    $playlist = @($manifest.videoPlaylist)
+    $provenance = @($manifest.provenance)
+    Assert-Workflow ($playlist.Count -gt 0 -and $provenance.Count -gt 0) "empty video playlist or provenance in $manifestPath"
+    $videos = @([regex]::Matches($allDocuments, '<video\b[^>]*>') | ForEach-Object {
+        $tag = $_.Value
+        $source = Get-Attribute $tag 'src'
+        Assert-Workflow ([bool]$source) "video source missing in $index"
+        $path = Join-Path $root ($source -replace '/', [IO.Path]::DirectorySeparatorChar)
+        Assert-Workflow (Test-Path -LiteralPath $path -PathType Leaf) "missing video asset $path"
+        [pscustomobject]@{
+            Tag = $tag
+            Source = $source
+            Path = $path
+            Start = [double](Get-Attribute $tag 'data-start')
+            Duration = [double](Get-Attribute $tag 'data-duration')
+            Cycle = [int](Get-Attribute $tag 'data-cycle-index')
+            SourceIndex = [int](Get-Attribute $tag 'data-source-index')
+        }
+    })
+    Assert-Workflow ($videos.Count -eq $playlist.Count) "video tag count does not match videoPlaylist in $manifestPath"
+    $cursor = 0.0
+    for ($i = 0; $i -lt $playlist.Count; $i++) {
+        $segment = $playlist[$i]
+        $video = $videos[$i]
+        $source = $provenance[[int]$segment.sourceIndex]
+        Assert-Workflow ($null -ne $source) "playlist source index $($segment.sourceIndex) is missing in $manifestPath"
+        Assert-Workflow ($video.Source -eq $source.path) "playlist source mismatch at segment $($i + 1)"
+        Assert-Workflow ($video.Cycle -eq [int]$segment.cycle -and $video.SourceIndex -eq [int]$segment.sourceIndex) "playlist metadata mismatch at segment $($i + 1)"
+        Assert-Workflow ([math]::Abs($video.Start - [double]$segment.start) -le 0.01 -and [math]::Abs($video.Duration - [double]$segment.duration) -le 0.01) "playlist timing mismatch at segment $($i + 1)"
+        Assert-Workflow ([math]::Abs($video.Start - $cursor) -le 0.01) "video playlist has a gap or overlap at segment $($i + 1)"
+        Assert-Workflow ($video.Duration -gt 0 -and $video.Duration -le ([double]$source.sourceDuration_s + 0.01)) "video segment exceeds its source duration at segment $($i + 1)"
+        Assert-Workflow ((Get-Attribute $video.Tag 'data-media-start') -eq '0') "video media offset is not zero at segment $($i + 1)"
+        Assert-Workflow ($video.Tag -notmatch '\sloop(?:\s|>|=)' -and $video.Tag -notmatch 'data-playback-rate\s*=') "video loop/rate override found at segment $($i + 1)"
+        $cursor = $video.Start + $video.Duration
+    }
+    $images = @([regex]::Matches($allDocuments, '<img\b[^>]*>') | ForEach-Object {
+        $source = Get-Attribute $_.Value 'src'
+        if ($source) { $source }
+    })
+    Assert-Workflow (@($images | Where-Object { [IO.Path]::GetFileName($_) -ne 'company-logo.jpg' }).Count -eq 0) "static scene image found in $index"
+
     [pscustomobject]@{
         Root = $root
         Width = [int](Get-Attribute $rootTag 'data-width')
         Height = [int](Get-Attribute $rootTag 'data-height')
         Duration = [double](Get-Attribute $rootTag 'data-duration')
         Audio = $audio
-        HasPlaybackRate = $html -match 'data-playback-rate\s*='
-        SceneImages = @($documents | ForEach-Object { [regex]::Matches($_, '<img\b[^>]*>') } | ForEach-Object {
-            Get-Attribute $_.Value 'src'
-        } | Where-Object { $_ -like 'assets/*' } | ForEach-Object {
-            $source = $_
-            $path = Join-Path $root ($source -replace '/', [IO.Path]::DirectorySeparatorChar)
-            Assert-Workflow (Test-Path -LiteralPath $path -PathType Leaf) "missing scene asset $path"
-            $size = & ffprobe -v error -select_streams v:0 -show_entries 'stream=width,height' -of json $path | ConvertFrom-Json
-            Assert-Workflow ($LASTEXITCODE -eq 0 -and @($size.streams).Count -eq 1) "cannot read scene dimensions for $path"
-            [pscustomobject]@{
-                Name = [IO.Path]::GetFileName($source)
-                Hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $path).Hash
-                Width = [int]$size.streams[0].width
-                Height = [int]$size.streams[0].height
-            }
-        })
+        HasPlaybackRate = $allDocuments -match 'data-playback-rate\s*='
+        Videos = $videos
+        Playlist = $playlist
+        Provenance = $provenance
+        Images = $images
     }
 }
 
@@ -79,6 +113,9 @@ function Invoke-HyperFramesCheck([string]$Directory, [int]$Run) {
             $exitCode = $LASTEXITCODE
             $ErrorActionPreference = $strictPreference
             $text = $lines -join "`n"
+            if ($text -match 'CommandNotFoundException|The term .+ is not recognized') {
+                Assert-Workflow $false "HyperFrames check command is unavailable in $Directory"
+            }
             if ($exitCode -eq 0) { break }
             if ($text -notmatch 'ERR_UNSAFE_PORT' -or $attempt -eq 3) {
                 Assert-Workflow $false "HyperFrames check run $Run failed in $Directory"
@@ -121,11 +158,27 @@ for ($i = 0; $i -lt $landscape.Audio.Count; $i++) {
     Assert-Workflow ($landscape.Audio[$i].Hash -eq $portrait.Audio[$i].Hash) "voice content differs at track $($i + 1)"
 }
 
-Assert-Workflow ($landscape.SceneImages.Count -gt 0 -and $landscape.SceneImages.Count -eq $portrait.SceneImages.Count) 'scene-image counts differ or are empty'
-Assert-Workflow (-not @($landscape.SceneImages | Where-Object { $_.Width -le $_.Height }).Count) 'landscape project references a non-landscape scene asset'
-Assert-Workflow (-not @($portrait.SceneImages | Where-Object { $_.Width -ge $_.Height }).Count) 'portrait project references a non-portrait scene asset'
-$landscapeImageHashes = @($landscape.SceneImages | ForEach-Object Hash)
-Assert-Workflow (-not @($portrait.SceneImages | Where-Object { $_.Hash -in $landscapeImageHashes }).Count) 'portrait project reuses a landscape scene asset'
+Assert-Workflow ($landscape.Playlist.Count -gt 0 -and $landscape.Playlist.Count -eq $landscape.Videos.Count) 'landscape video playlist is empty or incomplete'
+Assert-Workflow ($portrait.Playlist.Count -gt 0 -and $portrait.Playlist.Count -eq $portrait.Videos.Count) 'portrait video playlist is empty or incomplete'
+
+foreach ($project in @($landscape, $portrait)) {
+    $isLandscape = $project.Width -gt $project.Height
+    foreach ($source in $project.Provenance) {
+        $native = [int]$source.stream.width -gt [int]$source.stream.height
+        Assert-Workflow ($native -eq $isLandscape) "playlist source aspect does not match project layout in $($project.Root)"
+    }
+    $firstCycle = @($project.Playlist | Where-Object { [int]$_.cycle -eq 0 })
+    Assert-Workflow ($firstCycle.Count -eq $project.Provenance.Count) "first video cycle is incomplete in $($project.Root)"
+    for ($i = 0; $i -lt $firstCycle.Count; $i++) {
+        Assert-Workflow ([int]$firstCycle[$i].sourceIndex -eq $i -and [bool]$firstCycle[$i].fullSource) "first video cycle order is invalid in $($project.Root)"
+    }
+    $hasSecondCycle = @($project.Playlist | Where-Object { [int]$_.cycle -ge 1 }).Count -gt 0
+    $firstCycleDuration = ($project.Provenance | Measure-Object -Property sourceDuration_s -Sum).Sum
+    Assert-Workflow ($hasSecondCycle -or [math]::Abs(($project.Videos[-1].Start + $project.Videos[-1].Duration) - $firstCycleDuration) -le 0.02) "playlist does not finish the first cycle or restart it in $($project.Root)"
+}
+
+Assert-Workflow (-not @($landscape.Playlist | Where-Object { [int]$_.sourceIndex -lt 0 -or [int]$_.sourceIndex -ge $landscape.Provenance.Count }).Count) 'landscape playlist references an invalid source'
+Assert-Workflow (-not @($portrait.Playlist | Where-Object { [int]$_.sourceIndex -lt 0 -or [int]$_.sourceIndex -ge $portrait.Provenance.Count }).Count) 'portrait playlist references an invalid source'
 
 for ($run = 1; $run -le $Runs; $run++) {
     Invoke-HyperFramesCheck $landscape.Root $run

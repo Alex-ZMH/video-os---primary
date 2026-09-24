@@ -29,22 +29,21 @@ Generate one candidate block first, with a version suffix such as `-sunny-v2`. C
 
 Only after that candidate passes should the remaining blocks be generated with the same settings. Grouping three related paragraphs per WAV is the proven compromise between continuity and replaceability. Preserve about 0.5 seconds between blocks. Record exact `ffprobe` durations in `audio_meta.json`; never assume a regenerated take matches the previous duration.
 
-## 3. Build scene assets
+## 3. Prepare the video sources
 
-Use detailed, photorealistic industrial scenes with credible labs, CAE workstations, devices, fixtures, and engineering reviews. Avoid empty UI wireframes or generic glowing diagrams as the whole scene.
+Inventory the user-supplied videos by topic and native aspect ratio. Keep the source order deterministic and record each source path, duration, dimensions, and hash. Use 16:9 sources for the landscape project and 9:16 sources for the portrait project; never crop a landscape source into the portrait deliverable.
 
-Create the landscape and portrait visual sets separately:
+Do not create or insert static scene plates. If a topic has fewer source videos than the narration needs, the playlist loop supplies the remaining duration after the first complete pass. The only image asset allowed in the composition is the user-approved company logo on the black end card.
 
-- landscape: compose directly for 16:9;
-- portrait: generate or outpaint for 9:16 and reposition people, phones, instruments, and screens deliberately;
-- do not crop the landscape image into the portrait canvas;
-- use stable versioned filenames for regenerated assets.
-
-When portrait copy obscures people, samples, instruments, or screens, keep the portrait-native photo full bleed and move copy into translucent glass overlays at the top and bottom. Reserve the middle as a text-free clear zone for faces, samples, instruments, and screens. Prefer clear glass when scene detail should stay sharp: use no background blur, a low-opacity tint, slight brightness/contrast adjustment, and edge highlights. Use frosted glass only when deliberate diffusion is requested or needed for legibility. Put the safety margin inside the bottom glass padding instead of adding a separate opaque blank strip. Use solid banded zoning only when the source image cannot support readable translucent overlays, and record the chosen safe-zone geometry in `BRIEF.md` and `frame.md`.
+Place titles, scene numbers, notes, and captions over the active video. Use small, high-transparency gray boxes sized to their content, keep the number close to the title, and preserve a clear central region for people, equipment, samples, and screens. Record the safe-zone geometry in `BRIEF.md` and `frame.md`.
 
 ## 4. Assemble and retime both projects
 
 Keep narration text, voice files, claim order, and scene meaning identical across both projects. Layout, crop, and camera movement may differ by aspect ratio.
+
+Build the motion track as an ordered video playlist, independently of narration scene boundaries. Record `videoPlaylist` (or an equivalent manifest) with the source index, cycle index, start, duration, and first-pass completeness for every segment. The first cycle must contain every source video in order. If narration continues after that cycle, append a second cycle beginning at source index zero and continue until narration ends. Segments must be contiguous and must not be separated by static image plates. Scene headings, notes, and captions sit above the active video; the black company-logo card begins only after narration.
+
+Keep source videos at natural 1× and mute their embedded audio. Do not repeat a clip inside the first cycle, do not use playback-rate to stretch a clip, and do not fill an individual scene with a still image. The only image allowed in the composition is the black end-card logo.
 
 Whenever voice duration changes, update every dependent artifact in both projects:
 

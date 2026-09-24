@@ -37,8 +37,10 @@ The script gates on:
 - equal composition duration;
 - no authored media playback-rate override;
 - equal voice-track count, filenames, and SHA-256 content across both projects;
-- equal, non-empty scene-image references resolved from the root and its sub-compositions;
-- landscape and portrait scene images using native aspect dimensions with no cross-layout file reuse;
+- equal, non-empty ordered video-playlist manifests resolved from the root and its sub-compositions;
+- each playlist's first cycle contains every native-ratio source video exactly once and later cycles restart at source index zero;
+- contiguous video segments with no static scene-image nodes (the black company-logo end card is the only allowed image);
+- landscape and portrait video sources using native aspect dimensions with no cross-layout file reuse;
 - every HyperFrames check run returning `ok: true`;
 - optional MP4s containing the expected H.264 video and AAC audio streams with matching duration.
 
