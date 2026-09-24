@@ -18,8 +18,11 @@
 - `reviews/`：成品索引、审核说明和成品库规则，仅保留文本证据。
 - `archive/`：本次旧版本清理记录及 278 个本地归档文件的路径、大小和 SHA-256 清单。
 - `skill/build-industrial-agent-videos/`：可安装的 Codex Skill、参考规则和 `verify_pair.ps1`。
+- `workflow-ui/`：本地提示词编辑窗口；可在项目输入、口播、视频轮播、字幕/文字和渲染导出五个环节修改提示词，并导出配置 JSON。
 
 当前视觉基线使用连续视频播放列表：所有视频按源清单顺序完整播放一轮，口播未结束时从第一个视频循环；场景中不插入静态图片，片尾保留黑底公司 logo 卡。
+
+启动提示词窗口：`powershell -ExecutionPolicy Bypass -File .\workflow-ui\start-workflow.ps1`，然后访问 `http://127.0.0.1:3117`。
 
 ## 使用
 

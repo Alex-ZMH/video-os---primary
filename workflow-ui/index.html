@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>工业视频工作流 · 提示词窗口</title>
+  <style>
+    :root { color-scheme: dark; --bg:#101417; --panel:#192126; --panel2:#202a31; --line:#34434b; --text:#edf4f3; --muted:#9eafb1; --accent:#8be0d0; --accent2:#45b8a8; }
+    * { box-sizing:border-box; }
+    body { margin:0; min-height:100vh; background:radial-gradient(circle at 80% -10%,#263d42 0,#101417 46%); color:var(--text); font:15px/1.5 system-ui,-apple-system,"Segoe UI","Microsoft YaHei",sans-serif; }
+    button,textarea,input,select { font:inherit; }
+    button { cursor:pointer; border:1px solid var(--line); border-radius:8px; color:var(--text); background:var(--panel2); padding:9px 13px; }
+    button:hover { border-color:var(--accent2); }
+    .app { display:grid; grid-template-columns:250px minmax(0,1fr); min-height:100vh; }
+    aside { padding:24px 16px; background:rgba(10,14,16,.72); border-right:1px solid var(--line); }
+    .brand { margin:0 8px 26px; }
+    .brand h1 { margin:0 0 4px; font-size:18px; letter-spacing:.3px; }
+    .brand p { margin:0; color:var(--muted); font-size:12px; }
+    nav { display:grid; gap:7px; }
+    nav button { text-align:left; background:transparent; border-color:transparent; padding:12px; }
+    nav button.active { background:rgba(139,224,208,.14); border-color:rgba(139,224,208,.4); color:var(--accent); }
+    nav small { display:block; margin-top:3px; color:var(--muted); font-size:11px; }
+    main { width:min(980px,100%); padding:34px clamp(22px,5vw,66px) 48px; }
+    .top { display:flex; align-items:flex-start; justify-content:space-between; gap:20px; margin-bottom:28px; }
+    .top h2 { margin:0 0 6px; font-size:25px; }
+    .top p { margin:0; color:var(--muted); }
+    .badge { white-space:nowrap; color:var(--accent); border:1px solid rgba(139,224,208,.35); background:rgba(139,224,208,.08); padding:6px 9px; border-radius:999px; font-size:12px; }
+    .card { background:rgba(25,33,38,.85); border:1px solid var(--line); border-radius:14px; padding:20px; margin-bottom:16px; box-shadow:0 10px 30px rgba(0,0,0,.14); }
+    label { display:block; margin-bottom:7px; color:#d6e4e3; font-weight:600; }
+    .field { margin-top:15px; }
+    textarea,input,select { width:100%; color:var(--text); border:1px solid var(--line); background:#11181c; border-radius:8px; outline:none; padding:10px 12px; }
+    textarea { min-height:170px; resize:vertical; line-height:1.65; }
+    textarea:focus,input:focus,select:focus { border-color:var(--accent2); box-shadow:0 0 0 3px rgba(69,184,168,.12); }
+    .prompt-head { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+    .prompt-head button { padding:5px 9px; font-size:12px; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; }
+    .actions { position:sticky; bottom:16px; display:flex; flex-wrap:wrap; gap:9px; padding:12px; background:rgba(16,20,23,.9); border:1px solid var(--line); border-radius:12px; backdrop-filter:blur(10px); }
+    .primary { background:var(--accent2); border-color:var(--accent2); color:#071311; font-weight:700; }
+    .status { margin-left:auto; color:var(--muted); align-self:center; font-size:13px; }
+    .tip { color:var(--muted); margin:0 0 4px; font-size:13px; }
+    .empty { color:var(--muted); padding:30px 0; }
+    @media (max-width:720px) { .app { grid-template-columns:1fr; } aside { border-right:0; border-bottom:1px solid var(--line); padding:14px; } nav { grid-template-columns:repeat(2,1fr); } main { padding:24px 15px 40px; } .top { display:block; } .badge { display:inline-block; margin-top:12px; } .grid { grid-template-columns:1fr; } .status { width:100%; margin:2px 0 0; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside>
+      <div class="brand"><h1>工业视频工作流</h1><p>提示词编辑窗口</p></div>
+      <nav id="stageNav"></nav>
+    </aside>
+    <main>
+      <div class="top">
+        <div><h2 id="stageTitle">加载中…</h2><p id="stageHint"></p></div>
+        <div class="badge" id="versionBadge">未加载</div>
+      </div>
+      <section id="stageContent"><div class="empty">正在读取工作流配置…</div></section>
+      <div class="actions">
+        <button class="primary" id="saveButton">保存当前修改</button>
+        <button id="resetStageButton">恢复本阶段默认值</button>
+        <button id="resetAllButton">恢复全部默认值</button>
+        <button id="exportButton">导出配置 JSON</button>
+        <button id="importButton">导入配置 JSON</button>
+        <input id="importFile" type="file" accept="application/json" hidden />
+        <span class="status" id="status">准备就绪</span>
+      </div>
+    </main>
+  </div>
+  <script>
+    const storageKey = 'industrial-video-workflow-prompts-v04';
+    let defaults, state, activeStage = 0, dirty = false;
+    const $ = (id) => document.getElementById(id);
+    const clone = (value) => JSON.parse(JSON.stringify(value));
+    const status = (message, good = false) => { $('status').textContent = message; $('status').style.color = good ? 'var(--accent)' : 'var(--muted)'; };
+    function fieldHtml(field, value) {
+      const safe = String(value ?? '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;').replaceAll('"','&quot;');
+      if (field.type === 'select') return `<select data-field="${field.id}">${field.options.map(option => `<option ${option === value ? 'selected' : ''}>${option}</option>`).join('')}</select>`;
+      return `<input data-field="${field.id}" type="${field.type || 'text'}" value="${safe}" />`;
+    }
+    function renderNav() {
+      $('stageNav').innerHTML = state.stages.map((stage, index) => `<button class="${index === activeStage ? 'active' : ''}" data-stage="${index}">${stage.name}<small>${stage.hint}</small></button>`).join('');
+      document.querySelectorAll('[data-stage]').forEach(button => button.addEventListener('click', () => { activeStage = Number(button.dataset.stage); render(); }));
+    }
+    function render() {
+      const stage = state.stages[activeStage];
+      $('stageTitle').textContent = stage.name;
+      $('stageHint').textContent = stage.hint;
+      $('versionBadge').textContent = state.version;
+      $('stageContent').innerHTML = [...(stage.prompts || []).map(prompt => `<div class="card"><div class="prompt-head"><label for="prompt-${prompt.id}">${prompt.label}</label><button data-copy="${prompt.id}">复制提示词</button></div><textarea id="prompt-${prompt.id}" data-prompt="${prompt.id}">${String(prompt.value || '').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')}</textarea></div>`), stage.fields?.length ? `<div class="card"><p class="tip">本阶段参数</p><div class="grid">${stage.fields.map(field => `<div class="field"><label>${field.label}</label>${fieldHtml(field, field.value)}</div>`).join('')}</div></div>` : ''].join('');
+      document.querySelectorAll('[data-prompt]').forEach(input => input.addEventListener('input', () => { const p = stage.prompts.find(item => item.id === input.dataset.prompt); p.value = input.value; dirty = true; status('有未保存的修改'); }));
+      document.querySelectorAll('[data-field]').forEach(input => input.addEventListener('input', () => { const f = stage.fields.find(item => item.id === input.dataset.field); f.value = input.value; dirty = true; status('有未保存的修改'); }));
+      document.querySelectorAll('[data-copy]').forEach(button => button.addEventListener('click', async () => { const p = stage.prompts.find(item => item.id === button.dataset.copy); await navigator.clipboard.writeText(p.value); status('提示词已复制', true); }));
+      renderNav();
+    }
+    async function save() {
+      localStorage.setItem(storageKey, JSON.stringify(state));
+      try { const response = await fetch('/api/config', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(state)}); if (!response.ok) throw new Error('server'); status('已保存到浏览器和本地配置', true); }
+      catch { status('已保存到浏览器；服务器配置未写入'); }
+      dirty = false;
+    }
+    function resetStage() { state.stages[activeStage] = clone(defaults.stages[activeStage]); dirty = true; render(); status('本阶段已恢复默认值'); }
+    function resetAll() { state = clone(defaults); dirty = true; render(); status('全部阶段已恢复默认值'); }
+    $('saveButton').addEventListener('click', save);
+    $('resetStageButton').addEventListener('click', resetStage);
+    $('resetAllButton').addEventListener('click', resetAll);
+    $('exportButton').addEventListener('click', () => { const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'}); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `workflow-prompts-${state.version}.json`; link.click(); URL.revokeObjectURL(link.href); status('配置 JSON 已导出', true); });
+    $('importButton').addEventListener('click', () => $('importFile').click());
+    $('importFile').addEventListener('change', async (event) => { const file = event.target.files[0]; if (!file) return; try { const imported = JSON.parse(await file.text()); if (!imported.stages?.length) throw new Error('缺少 stages'); state = imported; dirty = true; render(); status('已导入，保存后生效'); } catch { status('导入失败：请确认是工作流配置 JSON'); } event.target.value = ''; });
+    window.addEventListener('beforeunload', (event) => { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
+    async function boot() {
+      try { const response = await fetch('/api/config'); defaults = await response.json(); }
+      catch { defaults = await (await fetch('workflow-prompts.json')).json(); }
+      const saved = localStorage.getItem(storageKey); state = saved ? JSON.parse(saved) : clone(defaults); render();
+      status(saved ? '已载入浏览器中的上次修改' : '准备就绪');
+    }
+    boot();
+  </script>
+</body>
+</html>

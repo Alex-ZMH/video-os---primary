@@ -18,3 +18,4 @@ assets/
 .env.*
 *.pem
 *.key
+workflow-ui/workflow-prompts.local.json
