@@ -22,7 +22,7 @@
 
 当前视觉基线使用连续视频播放列表：所有视频按源清单顺序完整播放一轮，口播未结束时从第一个视频循环；场景中不插入静态图片，片尾保留黑底公司 logo 卡。
 
-启动提示词窗口：`powershell -ExecutionPolicy Bypass -File .\workflow-ui\start-workflow.ps1`，然后访问 `http://127.0.0.1:3117`。
+启动提示词窗口：双击 `workflow-ui\start-workflow.bat`，不需要启动本地端口。
 
 ## 使用
 

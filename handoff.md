@@ -29,4 +29,4 @@
 - 制作流程：`skill/build-industrial-agent-videos/references/workflow.md`
 - 稳定性和成对验证：`skill/build-industrial-agent-videos/references/stability.md`
 - 成品归档：`reviews/成品库规则.md`
-- 提示词编辑窗口：`workflow-ui/`；启动后可在五个工作阶段修改提示词并导出 JSON 配置。
+- 提示词编辑窗口：`workflow-ui/`；双击 `workflow-ui/start-workflow.bat` 后，可在五个工作阶段修改提示词并导出 JSON 配置，不依赖本地端口。

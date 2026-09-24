@@ -50,8 +50,8 @@
     </aside>
     <main>
       <div class="top">
-        <div><h2 id="stageTitle">加载中…</h2><p id="stageHint"></p></div>
-        <div class="badge" id="versionBadge">未加载</div>
+      <div><h2 id="stageTitle">准备就绪</h2><p id="stageHint"></p></div>
+        <div class="badge" id="versionBadge">本地文件模式</div>
       </div>
       <section id="stageContent"><div class="empty">正在读取工作流配置…</div></section>
       <div class="actions">
@@ -65,6 +65,7 @@
       </div>
     </main>
   </div>
+  <script src="./workflow-prompts.js"></script>
   <script>
     const storageKey = 'industrial-video-workflow-prompts-v04';
     let defaults, state, activeStage = 0, dirty = false;
@@ -91,10 +92,9 @@
       document.querySelectorAll('[data-copy]').forEach(button => button.addEventListener('click', async () => { const p = stage.prompts.find(item => item.id === button.dataset.copy); await navigator.clipboard.writeText(p.value); status('提示词已复制', true); }));
       renderNav();
     }
-    async function save() {
+    function save() {
       localStorage.setItem(storageKey, JSON.stringify(state));
-      try { const response = await fetch('/api/config', {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(state)}); if (!response.ok) throw new Error('server'); status('已保存到浏览器和本地配置', true); }
-      catch { status('已保存到浏览器；服务器配置未写入'); }
+      status('已保存到浏览器本地', true);
       dirty = false;
     }
     function resetStage() { state.stages[activeStage] = clone(defaults.stages[activeStage]); dirty = true; render(); status('本阶段已恢复默认值'); }
@@ -106,9 +106,8 @@
     $('importButton').addEventListener('click', () => $('importFile').click());
     $('importFile').addEventListener('change', async (event) => { const file = event.target.files[0]; if (!file) return; try { const imported = JSON.parse(await file.text()); if (!imported.stages?.length) throw new Error('缺少 stages'); state = imported; dirty = true; render(); status('已导入，保存后生效'); } catch { status('导入失败：请确认是工作流配置 JSON'); } event.target.value = ''; });
     window.addEventListener('beforeunload', (event) => { if (dirty) { event.preventDefault(); event.returnValue = ''; } });
-    async function boot() {
-      try { const response = await fetch('/api/config'); defaults = await response.json(); }
-      catch { defaults = await (await fetch('workflow-prompts.json')).json(); }
+    function boot() {
+      defaults = clone(window.workflowDefaults);
       const saved = localStorage.getItem(storageKey); state = saved ? JSON.parse(saved) : clone(defaults); render();
       status(saved ? '已载入浏览器中的上次修改' : '准备就绪');
     }

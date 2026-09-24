@@ -1,27 +1,23 @@
 # 提示词编辑窗口
 
-这是工业视频工作流的本地提示词窗口。它把需要人工输入或修改的环节分成五步：项目输入、口播文案、视频轮播、字幕与文字、渲染导出。
+这是工业视频工作流的本地提示词窗口。它把需要人工输入或修改的环节分成五步：项目输入、口播文案、视频轮播、字幕与文字、渲染导出。页面是独立本地文件，不需要 Node、服务器或本地端口。
 
 ## 启动
 
-在 PowerShell 中运行：
+直接双击：
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\start-workflow.ps1
-```
+[start-workflow.bat](./start-workflow.bat)
 
-然后打开 `http://127.0.0.1:3117`。也可以指定端口：
+也可以在资源管理器中直接打开：
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\start-workflow.ps1 -Port 3118
-```
+`index.html`
 
 ## 使用
 
 - 左侧选择阶段，修改提示词或参数。
-- “保存当前修改”会写入浏览器本地存储，并在服务器可写时保存为 `workflow-prompts.local.json`。
+- “保存当前修改”会写入浏览器本地存储，不需要联网或启动服务。
 - “导出配置 JSON”可把当前提示词交给后续生成脚本或另一台电脑。
 - “导入配置 JSON”可恢复一份已有配置。
 - “恢复默认值”只恢复当前版本 `video-playlist-v04` 的规则，不会写入此前的中间调整。
 
-`workflow-prompts.local.json` 是本机工作文件，不应提交到 GitHub；默认模板在 `workflow-prompts.json`。
+默认模板分别保存在 `workflow-prompts.json` 和页面内置的 `workflow-prompts.js`；后者保证双击 BAT 时不依赖本地端口。
